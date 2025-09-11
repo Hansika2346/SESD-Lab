@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Colorful Banking — Full Demo</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent1:#ff6b6b; --accent2:#7c5cff; --accent3:#3be8b0; --glass: rgba(255,255,255,0.04);
+      --muted: rgba(255,255,255,0.6);
+      --success: #3be8b0; --danger: #ff6b6b;
+    }
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    html,body{height:100%;margin:0;background:linear-gradient(140deg,#041022 0%, #07122b 40%, #07162b 100%);color:#e6eef8}
+    .wrap{display:grid;grid-template-columns:360px 1fr 360px;gap:20px;padding:28px;max-width:1400px;margin:20px auto}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:18px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    .logo{display:flex;gap:12px;align-items:center}
+    .logo .mark{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;color:white}
+    h2{margin:10px 0 4px}
+    p.muted{color:var(--muted);margin:0 0 12px}
+
+    .accounts{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .acct{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02)}
+    .acct .meta{display:flex;flex-direction:column}
+    .acct b{font-size:15px}
+    .small{font-size:12px;color:var(--muted)}
+
+    .controls{margin-top:14px}
+    .controls h3{margin:6px 0 8px;font-size:16px}
+    form#createForm{display:flex;flex-direction:column;gap:10px}
+    input, select{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
+    button{cursor:pointer;border:0;padding:10px 12px;border-radius:10px;background:var(--glass);color:inherit}
+    .primary{background:linear-gradient(90deg,var(--accent2),var(--accent3));color:#02101a;font-weight:700}
+    .danger{background:linear-gradient(90deg,#ff9b9b,#ff6b6b);color:#2a0606}
+
+    .center{display:flex;flex-direction:column;gap:20px}
+    .balance{display:flex;align-items:center;justify-content:space-between}
+    .balance .big{font-size:34px;font-weight:800}
+    .panel{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+
+    form.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .notifications{max-height:380px;overflow:auto;display:flex;flex-direction:column;gap:10px}
+    .note{padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+    .note.success{border-left:6px solid var(--success)}
+    .note.warn{border-left:6px solid #ffd166}
+    .note.danger{border-left:6px solid var(--danger)}
+
+    .undoArea{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+
+    footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
+
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr;padding:12px}.undoArea{justify-content:flex-start}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo"><div class="mark">B</div><div><h3>BrightBank</h3><p class="small">Banking App Demo</p></div></div>
+
+      <h2>Accounts</h2>
+      <p class="muted">Select an account or create new. Notifications appear on changes.</p>
+
+      <div class="accounts" id="accountsList"></div>
+
+      <div class="controls">
+        <h3>Create New Account</h3>
+        <form id="createForm">
+          <input type="text" id="acctName" placeholder="Account Holder Name" required>
+          <select id="acctType" required>
+            <option value="savings">Savings</option>
+            <option value="current">Current</option>
+            <option value="fixed">Fixed Deposit</option>
+          </select>
+          <input type="number" id="acctBalance" placeholder="Opening Balance" step="0.01" required>
+          <button type="submit" class="primary">Create Account</button>
+        </form>
+      </div>
+
+      <hr style="margin:14px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+      <div class="small">Patterns: <strong>Observer</strong>, <strong>Strategy</strong>, <strong>Command</strong></div>
+    </div>
+
+    <div class="center">
+      <div class="panel">
+        <div class="balance">
+          <div>
+            <div class="small">Active Account</div>
+            <div class="big" id="activeName">—</div>
+            <div class="small">Type: <span id="activeType">—</span> | ID: <span id="activeId">—</span></div>
+          </div>
+          <div style="text-align:right">
+            <div class="small">Balance</div>
+            <div class="big" id="activeBal">₹0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <form class="row" id="opForm">
+          <select id="opType"><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="transfer">Transfer</option><option value="interest">Apply Interest</option></select>
+          <input id="amount" type="number" placeholder="Amount" step="0.01" />
+          <select id="toAcct" style="display:none"></select>
+          <button type="submit" class="primary">Execute</button>
+        </form>
+        <div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <div class="small">Last operations</div>
+          <div class="undoArea"><button id="undoBtn">Undo</button></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h4 style="margin:0 0 8px">Interest Strategies (Preview)</h4>
+        <div class="small" id="strategyPreview">—</div>
+      </div>
+
+      <div class="panel">
+        <h4 style="margin:0 0 8px">Total Bank Balance</h4>
+        <div class="big" id="totalBal">₹0.00</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Notifications</h3>
+      <p class="muted">Observers auto-update on balance changes.</p>
+      <div class="notifications" id="notifications"></div>
+
+      <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)">
+      <h4>Console</h4>
+      <pre id="log" style="height:120px;overflow:auto;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)"></pre>
+    </div>
+  </div>
+
+  <footer>Demo banking app with OO design patterns. Not real banking.</footer>
+
+  <script>
+    const log = (t)=>{const el=document.getElementById('log');el.textContent = (new Date()).toLocaleTimeString()+" - "+t+"\n"+el.textContent}
+
+    class Subject{constructor(){this.observers=[]}addObserver(o){this.observers.push(o)}notify(payload){this.observers.forEach(o=>o.update(payload))}}
+
+    class InterestStrategy{apply(balance){return 0}}
+    class SavingsStrategy extends InterestStrategy{apply(balance){return balance*0.04}}
+    class FixedStrategy extends InterestStrategy{constructor(tenure){super();this.tenure=tenure||1}apply(balance){return balance*0.06*this.tenure}}
+    class CurrentStrategy extends InterestStrategy{apply(balance){return 0}}
+
+    class Account extends Subject{
+      constructor(id,name,type,balance=0){super();this.id=id;this.name=name;this.type=type;this.balance=balance;this.strategy = this._makeStrategy(type)}
+      _makeStrategy(type){if(type==='savings')return new SavingsStrategy();if(type==='fixed')return new FixedStrategy(1);return new CurrentStrategy()}
+      deposit(amount){this.balance+=amount;this.notify({type:'deposit',account:this,amount})}
+      withdraw(amount){if(amount>this.balance) throw new Error('Insufficient funds');this.balance-=amount;this.notify({type:'withdraw',account:this,amount})}
+      applyInterest(){const interest=this.strategy.apply(this.balance);this.balance+=interest;this.notify({type:'interest',account:this,amount:interest})}
+    }
+
+    class Command{execute(){}undo(){}}
+    class DepositCommand extends Command{constructor(account,amount){super();this.account=account;this.amount=amount}execute(){this.account.deposit(this.amount)}undo(){this.account.withdraw(this.amount)}}
+    class WithdrawCommand extends Command{constructor(account,amount){super();this.account=account;this.amount=amount}execute(){this.account.withdraw(this.amount)}undo(){this.account.deposit(this.amount)}}
+    class TransferCommand extends Command{constructor(from,to,amount){super();this.from=from;this.to=to;this.amount=amount}execute(){this.from.withdraw(this.amount);this.to.deposit(this.amount)}undo(){this.to.withdraw(this.amount);this.from.deposit(this.amount)}}
+    class InterestCommand extends Command{constructor(account){super();this.account=account;this.added=0}execute(){const before=this.account.balance;this.account.applyInterest();this.added=this.account.balance-before}undo(){if(this.added>0){this.account.withdraw(this.added)}}}
+
+    class CommandManager{constructor(){this.stack=[]}exec(cmd){cmd.execute();this.stack.push(cmd);log('Executed: '+cmd.constructor.name)}undo(){const cmd=this.stack.pop();if(!cmd)return;cmd.undo();log('Undone: '+cmd.constructor.name)}}
+
+    class Notifier{constructor(container){this.container=container}update(payload){const el=document.createElement('div');el.className='note';if(payload.type==='deposit'){el.classList.add('success');el.innerHTML=`<b>Deposit ₹${payload.amount.toFixed(2)}</b><div class="small">to ${payload.account.name}</div>`}else if(payload.type==='withdraw'){el.classList.add('danger');el.innerHTML=`<b>Withdraw ₹${payload.amount.toFixed(2)}</b><div class="small">from ${payload.account.name}</div>`}else if(payload.type==='interest'){el.classList.add('warn');el.innerHTML=`<b>Interest ₹${payload.amount.toFixed(2)}</b><div class="small">to ${payload.account.name}</div>`}this.container.prepend(el)}}
+
+    const app={accounts:[],active:null,cmdMgr:new CommandManager()}
+    const notiContainer=document.getElementById('notifications');
+    const notifier=new Notifier(notiContainer);
+
+    function createAccount(id,name,type,balance){const a=new Account(id,name,type,balance||0);a.addObserver(notifier);app.accounts.push(a);log('Created account '+name);renderAccounts();updateTotal();return a}
+    function renderAccounts(){const el=document.getElementById('accountsList');el.innerHTML='';app.accounts.forEach(a=>{const item=document.createElement('div');item.className='acct';item.onclick=()=>setActive(a.id);item.innerHTML=`<div class="meta"><b>${a.name}</b><div class="small">${a.type} • ID ${a.id}</div></div><div><div class="small">₹${a.balance.toFixed(2)}</div></div>`;el.appendChild(item)})}
+    function setActive(id){app.active=app.accounts.find(x=>x.id===id);updateActiveUI()}
+    function updateActiveUI(){const a=app.active;if(!a)return;document.getElementById('activeName').textContent=a.name;document.getElementById('activeType').textContent=a.type;document.getElementById('activeId').textContent=a.id;document.getElementById('activeBal').textContent='₹'+a.balance.toFixed(2);document.getElementById('strategyPreview').textContent='Strategy: '+a.strategy.constructor.name+' — Interest now: ₹'+a.strategy.apply(a.balance).toFixed(2);const sel=document.getElementById('toAcct');sel.innerHTML='';app.accounts.filter(x=>x.id!==a.id).forEach(x=>{const o=document.createElement('option');o.value=x.id;o.textContent=x.name;sel.appendChild(o)})}
+    function updateTotal(){const total=app.accounts.reduce((sum,a)=>sum+a.balance,0);document.getElementById('totalBal').textContent='₹'+total.toFixed(2)}
+
+    document.getElementById('opForm').addEventListener('submit',e=>{e.preventDefault();const op=document.getElementById('opType').value;const amt=parseFloat(document.getElementById('amount').value);if(!app.active){alert('Select an account first');return}try{if(op==='deposit'){app.cmdMgr.exec(new DepositCommand(app.active,amt))}else if(op==='withdraw'){app.cmdMgr.exec(new WithdrawCommand(app.active,amt))}else if(op==='transfer'){const toId=document.getElementById('toAcct').value;const to=app.accounts.find(x=>x.id===toId);app.cmdMgr.exec(new TransferCommand(app.active,to,amt))}else if(op==='interest'){app.cmdMgr.exec(new InterestCommand(app.active))}}catch(err){alert(err.message);log('Error: '+err.message)}renderAccounts();updateActiveUI();updateTotal()})
+
+    document.getElementById('opType').addEventListener('change',e=>{document.getElementById('toAcct').style.display=(e.target.value==='transfer')?'inline-block':'none'})
+    document.getElementById('undoBtn').addEventListener('click',()=>{app.cmdMgr.undo();renderAccounts();updateActiveUI();updateTotal()})
+
+    // New Account Creation Form
+    document.getElementById('createForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const id='A'+(app.accounts.length+1);
+      const name=document.getElementById('acctName').value.trim();
+      const type=document.getElementById('acctType').value;
+      const balance=parseFloat(document.getElementById('acctBalance').value);
+      if(!name || isNaN(balance)){alert("Please enter valid details");return;}
+      const acct=createAccount(id,name,type,balance);
+      setActive(acct.id);
+      e.target.reset();
+    });
+
+    // Seed initial accounts
+    function seed(){createAccount('A1','Rani Devi (Savings)','savings',12000);createAccount('A2','Varun (Current)','current',5400);createAccount('A3','Minnu (Fixed)','fixed',50000);setActive('A1')}seed();
+  </script>
+</body>
+</html>
